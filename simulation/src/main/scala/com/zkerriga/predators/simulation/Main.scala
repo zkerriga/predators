@@ -2,6 +2,7 @@ package com.zkerriga.predators.simulation
 
 import cats.Semigroup
 import com.zkerriga.predators.simulation.Logic.{GameState, RoundResult}
+import com.zkerriga.predators.simulation.PlayerLogic.Bonus
 
 import scala.annotation.tailrec
 import scala.collection.parallel.CollectionConverters.*
@@ -60,29 +61,46 @@ object Main {
     }
   }
 
-  def resultProcess(result: RoundResult): Data =
+  def multiplyBy(bonus: Bonus)(payout: BigDecimal): BigDecimal =
+    payout * (if bonus == Bonus.Double then 2
+              else if bonus == Bonus.Triple then 3
+              else 1)
+
+  def resultProcess(result: RoundResult, bonus: Bonus): Data =
     result match
       case RoundResult.SingleFight(winner, prey) =>
         Data(
           singleFightCounter = 1,
-          nonFightLoseCounter = if winner != playerGuess && prey != playerGuess then 1 else 0,
-          singleLoseCounter = if prey == playerGuess then 1 else 0,
+          nonFightLoseCounter =
+            if winner != playerGuess && prey != playerGuess && bonus != Bonus.Full then 1 else 0,
+          singleLoseCounter = if prey == playerGuess && bonus != Bonus.Nimble then 1 else 0,
           singleWinCounter = if winner == playerGuess then 1 else 0,
-          payout = if winner == playerGuess then playerBet * 2 else 0,
+          payout = multiplyBy(bonus) {
+            if winner == playerGuess then playerBet * 2
+            else if prey == playerGuess && bonus == Bonus.Nimble then playerBet
+            else if prey != playerGuess && winner != playerGuess && bonus == Bonus.Full then
+              playerBet
+            else 0
+          },
         )
       case RoundResult.Batch(winner, semiWinner, prey) =>
         Data(
           multipleFightCounter = 1,
           nonFightLoseCounter =
-            if winner != playerGuess && semiWinner != playerGuess && prey != playerGuess then 1
+            if winner != playerGuess && semiWinner != playerGuess &&
+              prey != playerGuess && bonus != Bonus.Full
+            then 1
             else 0,
-          multipleLoseCounter = if prey == playerGuess then 1 else 0,
+          multipleLoseCounter = if prey == playerGuess && bonus != Bonus.Nimble then 1 else 0,
           multipleSemiWinCounter = if semiWinner == playerGuess then 1 else 0,
           multipleWinCounter = if winner == playerGuess then 1 else 0,
-          payout =
+          payout = multiplyBy(bonus) {
             if winner == playerGuess then playerBet * 2
+            else if semiWinner == playerGuess && bonus == Bonus.Nimble then playerBet * 2
             else if semiWinner == playerGuess then playerBet / 2
-            else 0,
+            else if prey == playerGuess && bonus == Bonus.Nimble then playerBet
+            else 0
+          },
         )
 
   @tailrec
@@ -97,7 +115,8 @@ object Main {
     val combinedData: Data = (1L to NumberOfRounds).par
       .map { _ =>
         val result = gameRound(Moderator.generateCards, GameState.Empty)
-        resultProcess(result)
+        val bonus = PlayerLogic.chooseBonus
+        resultProcess(result, bonus)
       }.fold(Data())(summon[Semigroup[Data]].combine)
 
     println(s"The stimulation ended with $combinedData")
