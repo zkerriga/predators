@@ -10,7 +10,7 @@ import scala.util.Random
 object Main {
   given random: Random = Random()
 
-  val NumberOfRounds: Long = 10000
+  val NumberOfRounds: Long = 1000000
 
   val playerGuess: Predator = Predator.Tiger
   val playerBet: BigDecimal = 1
