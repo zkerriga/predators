@@ -1,0 +1,11 @@
+# common IDEs to be ignored
+.idea/
+.bsp/
+.metals/
+.vscode/
+
+# build tool specific entries
+.bloop
+target
+metals.sbt
+project/project
