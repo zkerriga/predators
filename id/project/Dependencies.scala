@@ -2,7 +2,8 @@ import sbt._
 
 object Dependencies {
   object zio {
-    val zioJson = "dev.zio" %% "zio-json" % "0.3.0"
+    val zioJson = "dev.zio" %% "zio-json"    % "0.3.0"
+    val logging = "dev.zio" %% "zio-logging" % "2.1.2"
 
     val testVersion = "2.0.2"
 
@@ -21,7 +22,14 @@ object Dependencies {
     val sttpStub = "com.softwaremill.sttp.tapir" %% "tapir-sttp-stub-server" % version % Test
   }
 
+  object cats {
+    val version = "2.8.0"
+
+    val core = "org.typelevel" %% "cats-core" % version
+  }
+
   object other {
     val logback = "ch.qos.logback" % "logback-classic" % "1.4.4"
+    val encription = "com.github.t3hnar" %% "scala-bcrypt" % "4.3.1"
   }
 }

@@ -1,38 +1,53 @@
 package com.zkerriga.id
 
 import com.zkerriga.id.Endpoints
-import org.slf4j.LoggerFactory
 import sttp.tapir.server.interceptor.log.DefaultServerLog
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import zhttp.http.HttpApp
 import zhttp.service.server.ServerChannelFactory
 import zhttp.service.{EventLoopGroup, Server}
-import zio.{Console, Scope, Task, ZIO, ZIOAppArgs, ZIOAppDefault}
+import zio.{Console, LogLevel, Runtime, Scope, Task, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
+import zio.logging.LogFormat.*
+import zio.logging.{LogAnnotation, LogFormat, console, consoleJson}
+
+import java.util.UUID
 
 object Main extends ZIOAppDefault:
-  val log = LoggerFactory.getLogger(ZioHttpInterpreter.getClass.getName)
+  private val traceLogAnnotation =
+    LogAnnotation[String]("special-traceId", (_, value) => value, identity)
+
+  override val bootstrap: ZLayer[ZIOAppArgs with Scope, Any, Any] =
+    Runtime.removeDefaultLoggers >>> consoleJson(
+      LogFormat.colored + LogFormat.annotation(traceLogAnnotation),
+      logLevel = LogLevel.Debug,
+    )
 
   override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] =
     val serverOptions: ZioHttpServerOptions[Any] =
       ZioHttpServerOptions.customiseInterceptors
         .serverLog(
           DefaultServerLog[Task](
-            doLogWhenReceived = msg => ZIO.succeed(log.debug(msg)), // todo: clear
-            doLogWhenHandled = (msg, error) => ZIO.succeed(error.fold(log.debug(msg))(err => log.debug(msg, err))),
-            doLogAllDecodeFailures = (msg, error) => ZIO.succeed(error.fold(log.debug(msg))(err => log.debug(msg, err))),
-            doLogExceptions = (msg: String, ex: Throwable) => ZIO.succeed(log.debug(msg, ex)),
-            noLog = ZIO.unit
+            doLogWhenReceived = msg => ZIO.logInfo(msg), // todo: remove
+            doLogWhenHandled =
+              (msg, error) => error.fold(ZIO.logInfo(msg))(err => ZIO.logError(s"$msg, $err")),
+            doLogAllDecodeFailures =
+              (msg, error) => error.fold(ZIO.logInfo(msg))(err => ZIO.logError(s"$msg, $err")),
+            doLogExceptions = (msg: String, ex: Throwable) => ZIO.logError(s"$msg, $ex"),
+            noLog = ZIO.unit,
           )
         )
         .metricsInterceptor(Endpoints.prometheusMetrics.metricsInterceptor())
         .options
+
     val app: HttpApp[Any, Throwable] = ZioHttpInterpreter(serverOptions).toHttp(Endpoints.all)
 
     val port = sys.env.get("http.port").map(_.toInt).getOrElse(8080)
 
     (for
       serverStart <- Server(app).withPort(port).make
-      _ <- Console.printLine(s"Go to http://localhost:${serverStart.port}/docs to open SwaggerUI.Press ENTER key to exit.")
+      _ <- ZIO.logInfo(
+        s"Go to http://localhost:${serverStart.port}/docs to open SwaggerUI. Press ENTER key to exit."
+      ) @@ traceLogAnnotation("my-trace-id")
       _ <- Console.readLine
     yield serverStart)
       .provideSomeLayer(EventLoopGroup.auto(0) ++ ServerChannelFactory.auto ++ Scope.default)
