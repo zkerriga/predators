@@ -6,9 +6,9 @@ import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import zhttp.http.HttpApp
 import zhttp.service.server.ServerChannelFactory
 import zhttp.service.{EventLoopGroup, Server}
-import zio.{Console, LogLevel, Runtime, Scope, Task, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
 import zio.logging.LogFormat.*
 import zio.logging.{LogAnnotation, LogFormat, console, consoleJson}
+import zio.{Console, LogLevel, Runtime, Scope, Task, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
 
 import java.util.UUID
 

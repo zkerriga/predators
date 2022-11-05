@@ -1,48 +1,50 @@
 package com.zkerriga.id.endpoints
 
-import sttp.tapir.PublicEndpoint
 import com.zkerriga.id.domain.common.*
 import com.zkerriga.id.domain.player.*
-import sttp.tapir.*
+import sttp.model.StatusCode
 import sttp.tapir.Codec.JsonCodec
+import sttp.tapir.*
+import sttp.tapir.Schema.SName
 import sttp.tapir.json.zio.*
 import sttp.tapir.server.metrics.prometheus.PrometheusMetrics
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir.ZServerEndpoint
-import sttp.model.StatusCode
 
 object PlayerRegistration:
-  private[endpoints] case class RegistrationRequest(
+  private[endpoints] case class RegistrationData(
     login: Login,
     password: Password,
     firstName: FirstName,
     lastName: LastName,
   )
-  object RegistrationRequest {
-    val Example: RegistrationRequest =
-      RegistrationRequest(Login.Example, Password.Example, FirstName.Example, LastName.Example)
+  object RegistrationData {
+    val Example: RegistrationData =
+      RegistrationData(Login.Example, Password.Example, FirstName.Example, LastName.Example)
 
-    given zio.json.JsonCodec[RegistrationRequest] = zio.json.DeriveJsonCodec.gen
-    given sttp.tapir.Schema[RegistrationRequest]  = Schema.derived[RegistrationRequest]
+    given zio.json.JsonCodec[RegistrationData] = zio.json.DeriveJsonCodec.gen
+    given sttp.tapir.Schema[RegistrationData] =
+      Schema.derived[RegistrationData].name(SName("PlayerRegistrationData"))
   }
 
-  private[endpoints] case class RegistrationResponse(
+  private[endpoints] case class Response(
     token: AccessToken
   )
-  object RegistrationResponse {
-    val Example: RegistrationResponse = RegistrationResponse(AccessToken.Example)
+  object Response {
+    val Example: Response = Response(AccessToken.Example)
 
-    given zio.json.JsonCodec[RegistrationResponse] = zio.json.DeriveJsonCodec.gen
-    given sttp.tapir.Schema[RegistrationResponse]  = Schema.derived[RegistrationResponse]
+    given zio.json.JsonCodec[Response] = zio.json.DeriveJsonCodec.gen
+    given sttp.tapir.Schema[Response] =
+      Schema.derived[Response].name(SName("PlayerRegistrationResponse"))
   }
 
-  val registerPlayer: PublicEndpoint[RegistrationRequest, Unit, RegistrationResponse, Any] =
+  val registerPlayerEndpoint: PublicEndpoint[RegistrationData, Unit, Response, Any] =
     endpoint.post
       .in("restricted" / "register" / "player")
-      .in(jsonBody[RegistrationRequest].example(RegistrationRequest.Example))
+      .in(jsonBody[RegistrationData].example(RegistrationData.Example))
       .errorOut(statusCode(StatusCode.Conflict))
       .out(statusCode(StatusCode.Created))
-      .out(jsonBody[RegistrationResponse].example(RegistrationResponse.Example))
+      .out(jsonBody[Response].example(Response.Example))
       // todo: add cookie setting here for AccessToken
       .tags(List(Tags.Restricted, Tags.Registration))
       .name("Register player")
@@ -55,9 +57,10 @@ object PlayerRegistration:
 
   import zio.ZIO
   val registerPlayerServerEndpoint: ZServerEndpoint[Any, Any] =
-    registerPlayer.serverLogic { case RegistrationRequest(login, _, _, _) =>
+    registerPlayerEndpoint.serverLogic { case RegistrationData(login, _, _, _) =>
+      /* todo: add logic */
       ZIO.logInfo(s"received: $login") map { _ =>
-        if login == Login.Example then Right(RegistrationResponse(AccessToken.Example))
+        if login == Login.Example then Right(Response(AccessToken.Example))
         else Left(())
       }
     }

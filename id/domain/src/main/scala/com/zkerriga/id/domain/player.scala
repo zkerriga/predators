@@ -2,8 +2,8 @@ package com.zkerriga.id.domain
 
 import cats.syntax.either.*
 import com.zkerriga.id.domain.common.{PasswordHash, UserId}
-import zio.json.{JsonDecoder, JsonEncoder}
 import sttp.tapir.Schema
+import zio.json.{JsonDecoder, JsonEncoder}
 
 object player {
   opaque type PlayerId <: UserId = UserId

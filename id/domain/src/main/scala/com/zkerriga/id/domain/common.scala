@@ -1,8 +1,8 @@
 package com.zkerriga.id.domain
 
 import cats.syntax.either.*
-import zio.json.{JsonDecoder, JsonEncoder}
 import sttp.tapir.Schema
+import zio.json.{JsonDecoder, JsonEncoder}
 
 object common:
   opaque type UserId = String
