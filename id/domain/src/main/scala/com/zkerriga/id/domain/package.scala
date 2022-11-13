@@ -1,10 +1,10 @@
-package com.zkerriga.id.domain
+package com.zkerriga.id
 
 import cats.syntax.either.*
 import sttp.tapir.Schema
 import zio.json.{JsonDecoder, JsonEncoder}
 
-object common:
+package object domain {
   opaque type UserId = String
   object UserId {
     val Size = 16
@@ -15,26 +15,6 @@ object common:
       else "must contain only letters or digits".asLeft
 
     val Example: UserId = "de15t0dol8v1bb1"
-  }
-
-  opaque type Password = String
-  object Password {
-    def apply(password: String): Either[String, Password] =
-      if password.length < 8 || password.length > 40 then
-        "must contain from 1 to 40 characters".asLeft
-      else password.asRight
-
-    val Example: Password = "endless-shimmering-unicorn"
-
-    given JsonEncoder[Password] = JsonEncoder.string
-    given JsonDecoder[Password] = JsonDecoder.string.mapOrFail(apply)
-    given Schema[Password]      = Schema.string.description("password")
-  }
-
-  opaque type PasswordHash = String
-  object PasswordHash {
-    /* todo: add real encryption */
-    def generate(password: Password, salt: String): PasswordHash = salt + password
   }
 
   opaque type FirstName = String
@@ -81,3 +61,4 @@ object common:
     given Schema[AccessToken] = Schema.string
       .description("token that allows access to other systems")
   }
+}

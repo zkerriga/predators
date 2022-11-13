@@ -1,7 +1,6 @@
 package com.zkerriga.id.domain
 
 import cats.syntax.either.*
-import com.zkerriga.id.domain.common.{PasswordHash, UserId}
 import sttp.tapir.Schema
 import zio.json.{JsonDecoder, JsonEncoder}
 

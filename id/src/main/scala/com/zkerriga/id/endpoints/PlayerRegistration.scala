@@ -1,7 +1,8 @@
 package com.zkerriga.id.endpoints
 
-import com.zkerriga.id.domain.common.*
+import com.zkerriga.id.domain.*
 import com.zkerriga.id.domain.player.*
+import com.zkerriga.id.internal.domain.password.Password
 import sttp.model.StatusCode
 import sttp.tapir.Codec.JsonCodec
 import sttp.tapir.*
@@ -56,6 +57,8 @@ object PlayerRegistration:
       }
 
   import zio.ZIO
+  given CanEqual[Login, Login] = CanEqual.derived
+
   val registerPlayerServerEndpoint: ZServerEndpoint[Any, Any] =
     registerPlayerEndpoint.serverLogic { case RegistrationData(login, _, _, _) =>
       /* todo: add logic */
