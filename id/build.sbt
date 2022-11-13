@@ -7,6 +7,9 @@ lazy val rootProject = (project in file("."))
     name         := "id",
     version      := "0.1.0-SNAPSHOT",
     scalaVersion := mainScalaVersion,
+    scalacOptions ++= List(
+      "-language:strictEquality"
+    ),
     libraryDependencies ++= List(
       tapir.zioServer,
       tapir.prometheus,
