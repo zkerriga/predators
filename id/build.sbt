@@ -18,6 +18,7 @@ lazy val rootProject = (project in file("."))
       // other.logback,
       zio.zioJson,
       zio.logging,
+      other.pureconfig,
       // test
       tapir.sttpStub,
       zio.zioTest,

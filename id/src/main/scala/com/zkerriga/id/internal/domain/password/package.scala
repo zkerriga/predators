@@ -1,6 +1,7 @@
 package com.zkerriga.id.internal.domain
 
 import cats.syntax.either.*
+import pureconfig.ConfigReader
 import sttp.tapir.Schema
 import zio.json.{JsonDecoder, JsonEncoder}
 
@@ -21,10 +22,9 @@ package object password {
 
   opaque type Salt = String
   object Salt {
-    /* todo: has to be read from config
-     * given ConfigReader[Salt] = ???
-     */
     val Example: Salt = "4Jk7Fs0r18Rr"
+
+    given ConfigReader[Salt] = ConfigReader.stringConfigReader
   }
 
   opaque type PasswordHash = String

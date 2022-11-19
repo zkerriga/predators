@@ -1,16 +1,20 @@
 package com.zkerriga.id.endpoints
 
+import cats.syntax.either.*
 import com.zkerriga.id.domain.*
 import com.zkerriga.id.domain.player.*
 import com.zkerriga.id.internal.domain.password.Password
+import com.zkerriga.id.services.registration.RegistrationService
+import com.zkerriga.id.services.registration.errors.LoginConflictError
 import sttp.model.StatusCode
-import sttp.tapir.Codec.JsonCodec
 import sttp.tapir.*
+import sttp.tapir.Codec.JsonCodec
 import sttp.tapir.Schema.SName
 import sttp.tapir.json.zio.*
 import sttp.tapir.server.metrics.prometheus.PrometheusMetrics
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir.ZServerEndpoint
+import zio.{Exit, ZIO}
 
 object PlayerRegistration:
   private[endpoints] case class RegistrationData(
@@ -39,7 +43,7 @@ object PlayerRegistration:
       Schema.derived[Response].name(SName("PlayerRegistrationResponse"))
   }
 
-  val registerPlayerEndpoint: PublicEndpoint[RegistrationData, Unit, Response, Any] =
+  val protocol: PublicEndpoint[RegistrationData, Unit, Response, Any] =
     endpoint.post
       .in("restricted" / "register" / "player")
       .in(jsonBody[RegistrationData].example(RegistrationData.Example))
@@ -56,11 +60,8 @@ object PlayerRegistration:
           |in other services.""".stripMargin
       }
 
-  import zio.ZIO
-  given CanEqual[Login, Login] = CanEqual.derived
-
-  val registerPlayerServerEndpoint: ZServerEndpoint[Any, Any] =
-    registerPlayerEndpoint.serverLogic { case RegistrationData(login, _, _, _) =>
+  val logic: ZServerEndpoint[RegistrationService, Any] =
+    protocol.serverLogic { case RegistrationData(login, password, firstName, lastName) =>
       /* todo: add logic
        * 1 - log request
        * 2 - call database and check the login there
@@ -82,8 +83,16 @@ object PlayerRegistration:
        * 7 - log Response
        * 8 - return AccessToken to player
        */
-      ZIO.logInfo(s"received: $login") map { _ =>
-        if login == Login.Example then Right(Response(AccessToken.Example))
-        else Left(())
-      }
+      val call: ZIO[RegistrationService, Throwable | LoginConflictError, AccessToken] =
+        ZIO.serviceWithZIO[RegistrationService](
+          _.registerPlayer(login, password, firstName, lastName)
+        )
+
+      call.foldZIO(
+        {
+          case th: Throwable                => ZIO.succeed(().asLeft)
+          case conflict: LoginConflictError => ZIO.succeed(().asLeft)
+        },
+        token => ZIO.succeed(Response(token).asRight),
+      )
     }
