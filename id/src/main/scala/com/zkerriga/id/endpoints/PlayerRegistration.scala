@@ -47,7 +47,7 @@ object PlayerRegistration:
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[Response].example(Response.Example))
       // todo: add cookie setting here for AccessToken
-      .tags(List(Tags.Restricted, Tags.Registration))
+      .tags(List(RestrictedTag, RegistrationTag))
       .name("Register player")
       .summary("Endpoint for registering a new player")
       .description {
@@ -61,7 +61,27 @@ object PlayerRegistration:
 
   val registerPlayerServerEndpoint: ZServerEndpoint[Any, Any] =
     registerPlayerEndpoint.serverLogic { case RegistrationData(login, _, _, _) =>
-      /* todo: add logic */
+      /* todo: add logic
+       * 1 - log request
+       * 2 - call database and check the login there
+       *   + if login exists => ConflictError
+       *   + if any error with database => InternalServerError
+       * 3 - call database to add new player
+       *   + generate new UserId (uniq)
+       *   + if any error with database => InternalServerError
+       * 4 - generate new AccessToken
+       * async => 5 - prepare data
+       *            + set `createdAt` time
+       *            + calculate `expireAt` time
+       *            + get default `scopes` for player
+       *          6 - try to write the data to tokens storage
+       *            + if AccessToken already exists =>
+       *              + remove this AccessToken
+       *              + log WARN about the situation
+       *            + if it is a new one => write to storage
+       * 7 - log Response
+       * 8 - return AccessToken to player
+       */
       ZIO.logInfo(s"received: $login") map { _ =>
         if login == Login.Example then Right(Response(AccessToken.Example))
         else Left(())
