@@ -1,39 +1,45 @@
 package com.zkerriga.id
 
-import com.zkerriga.id.Endpoints
-import org.slf4j.LoggerFactory
+import com.zkerriga.id.config.{AppConfig, SecurityConfig}
+import com.zkerriga.id.endpoints.Endpoints
+import com.zkerriga.id.internal.domain.password.Salt
+import com.zkerriga.id.services.password.PasswordsService
+import com.zkerriga.id.services.registration.RegistrationService
 import sttp.tapir.server.interceptor.log.DefaultServerLog
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import zhttp.http.HttpApp
 import zhttp.service.server.ServerChannelFactory
-import zhttp.service.{EventLoopGroup, Server}
-import zio.{Console, Scope, Task, ZIO, ZIOAppArgs, ZIOAppDefault}
+import zhttp.service.{EventLoopGroup, Server, ServerChannelFactory}
+import zio.*
+import zio.logging.LogFormat.*
+import zio.logging.{LogAnnotation, LogFormat, console, consoleJson}
+
+import java.util.UUID
 
 object Main extends ZIOAppDefault:
-  val log = LoggerFactory.getLogger(ZioHttpInterpreter.getClass.getName)
+  override val bootstrap: ZLayer[ZIOAppArgs with Scope, Any, Any] =
+    Runtime.removeDefaultLoggers >>> consoleJson(LogFormat.default, logLevel = LogLevel.Debug)
 
-  override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] =
-    val serverOptions: ZioHttpServerOptions[Any] =
-      ZioHttpServerOptions.customiseInterceptors
-        .serverLog(
-          DefaultServerLog[Task](
-            doLogWhenReceived = msg => ZIO.succeed(log.debug(msg)), // todo: clear
-            doLogWhenHandled = (msg, error) => ZIO.succeed(error.fold(log.debug(msg))(err => log.debug(msg, err))),
-            doLogAllDecodeFailures = (msg, error) => ZIO.succeed(error.fold(log.debug(msg))(err => log.debug(msg, err))),
-            doLogExceptions = (msg: String, ex: Throwable) => ZIO.succeed(log.debug(msg, ex)),
-            noLog = ZIO.unit
-          )
-        )
-        .metricsInterceptor(Endpoints.prometheusMetrics.metricsInterceptor())
-        .options
-    val app: HttpApp[Any, Throwable] = ZioHttpInterpreter(serverOptions).toHttp(Endpoints.all)
+  type AllServices = RegistrationService
 
-    val port = sys.env.get("http.port").map(_.toInt).getOrElse(8080)
+  val http: HttpApp[AllServices, Throwable] =
+    ZioHttpInterpreter().toHttp(Endpoints.all)
 
-    (for
-      serverStart <- Server(app).withPort(port).make
-      _ <- Console.printLine(s"Go to http://localhost:${serverStart.port}/docs to open SwaggerUI.Press ENTER key to exit.")
-      _ <- Console.readLine
-    yield serverStart)
-      .provideSomeLayer(EventLoopGroup.auto(0) ++ ServerChannelFactory.auto ++ Scope.default)
-      .exitCode
+  val server: ZIO[AppConfig & AllServices & EventLoopGroup & ServerChannelFactory & Scope, Throwable, Unit] =
+    for
+      config      <- ZIO.service[AppConfig]
+      serverStart <- Server(http).withPort(config.server.port).make
+      _ <- ZIO.logInfo(s"Go to http://localhost:${serverStart.port}/docs to open SwaggerUI")
+      _ <- ZIO.never
+    yield ()
+
+  val run: ZIO[Environment with ZIOAppArgs with Scope, Any, Any] =
+    server.exitCode
+      .provide(
+        Scope.default,
+        AppConfig.live,
+        EventLoopGroup.auto(),
+        ServerChannelFactory.auto,
+        RegistrationService.live,
+        ZLayer.Debug.tree,
+      )
