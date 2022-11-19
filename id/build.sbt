@@ -1,6 +1,6 @@
 import Dependencies._
 
-val mainScalaVersion = "3.2.0"
+val mainScalaVersion = "3.2.1"
 
 lazy val rootProject = (project in file("."))
   .settings(
@@ -15,7 +15,7 @@ lazy val rootProject = (project in file("."))
       tapir.prometheus,
       tapir.swagger,
       tapir.zioJson,
-      // other.logback,
+      zio.core,
       zio.zioJson,
       zio.logging,
       other.pureconfig,

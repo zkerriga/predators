@@ -17,7 +17,7 @@ import zio.logging.{LogAnnotation, LogFormat, console, consoleJson}
 import java.util.UUID
 
 object Main extends ZIOAppDefault:
-  override val bootstrap: ZLayer[ZIOAppArgs with Scope, Any, Any] =
+  override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     Runtime.removeDefaultLoggers >>> consoleJson(LogFormat.default, logLevel = LogLevel.Debug)
 
   type AllServices = RegistrationService
