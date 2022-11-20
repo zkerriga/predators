@@ -18,7 +18,8 @@ trait EndpointErrorCompanion[E <: EndpointError: ClassTag] {
   private val toStandard: E => ErrorStandard = e => ErrorStandard(textCode, e.description)
 
   given JsonEncoder[E] = JsonEncoder[ErrorStandard].contramap[E](toStandard)
-  given JsonDecoder[E] = JsonDecoder[ErrorStandard].mapOrFail(_ => Left("not implemented")) // todo?
+  // Errors must only be encoded, so the decoder will not be called
+  given JsonDecoder[E] = JsonDecoder[ErrorStandard].mapOrFail(_ => Left("not implemented"))
   given Schema[E]      = summon[Schema[ErrorStandard]].map(_ => None)(toStandard)
 
   def matcher: EndpointOutput.OneOfVariant[E] =
