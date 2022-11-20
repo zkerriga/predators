@@ -3,7 +3,7 @@ package com.zkerriga.id.endpoints
 import cats.syntax.either.*
 import com.zkerriga.id.domain.*
 import com.zkerriga.id.domain.player.*
-import com.zkerriga.id.endpoints.errors.InternalError
+import com.zkerriga.id.endpoints.errors.{ErrorOneOf, InternalError}
 import com.zkerriga.id.internal.domain.password.Password
 import com.zkerriga.id.services.registration.RegistrationService
 import com.zkerriga.id.services.registration.errors.LoginConflictError
@@ -48,9 +48,7 @@ object PlayerRegistration:
     endpoint.post
       .in("restricted" / "register" / "player")
       .in(jsonBody[RegistrationData].example(RegistrationData.Example))
-      .errorOut(
-        oneOf[LoginConflictError | InternalError](LoginConflictError.matcher, InternalError.matcher)
-      )
+      .errorOut(ErrorOneOf.genUnion[LoginConflictError, InternalError])
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[Response].example(Response.Example))
       // todo: add cookie setting here for AccessToken
