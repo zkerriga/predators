@@ -11,15 +11,10 @@ import zhttp.http.HttpApp
 import zhttp.service.server.ServerChannelFactory
 import zhttp.service.{EventLoopGroup, Server, ServerChannelFactory}
 import zio.*
-import zio.logging.LogFormat.*
-import zio.logging.{LogAnnotation, LogFormat, console, consoleJson}
 
 import java.util.UUID
 
 object Main extends ZIOAppDefault:
-  override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
-    Runtime.removeDefaultLoggers >>> consoleJson(LogFormat.default, logLevel = LogLevel.Debug)
-
   type AllServices = RegistrationService
 
   val http: HttpApp[AllServices, Throwable] =

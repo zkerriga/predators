@@ -4,9 +4,8 @@ object Dependencies {
   object zio {
     val version = "2.0.4"
 
-    val core    = "dev.zio" %% "zio"         % version
-    val zioJson = "dev.zio" %% "zio-json"    % "0.3.0"
-    val logging = "dev.zio" %% "zio-logging" % "2.1.4"
+    val core    = "dev.zio" %% "zio"      % version
+    val zioJson = "dev.zio" %% "zio-json" % "0.3.0"
 
     val zioTest    = "dev.zio" %% "zio-test"     % version % Test
     val zioTestSbt = "dev.zio" %% "zio-test-sbt" % version % Test
