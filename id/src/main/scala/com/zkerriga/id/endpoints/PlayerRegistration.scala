@@ -58,9 +58,9 @@ object PlayerRegistration:
       .name("Register player")
       .summary("Endpoint for registering a new player")
       .description {
-        """Allows you to add a new unique player to the databases
-          |and immediately generate him a token for authentication
-          |in other services.""".stripMargin
+        """Allows you to add a new unique player to the database
+          |and immediately generate them a token for authentication
+          |in other services""".stripMargin
       }
 
   val logic: ZServerEndpoint[RegistrationService, Any] =
