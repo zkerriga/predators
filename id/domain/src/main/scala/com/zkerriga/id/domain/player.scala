@@ -7,6 +7,8 @@ import zio.json.{JsonDecoder, JsonEncoder}
 object player {
   opaque type PlayerId <: UserId = UserId
   object PlayerId {
+    export UserId.Size
+
     def apply(id: String): Either[String, PlayerId] = UserId.apply(id)
 
     val Example: PlayerId = UserId.Example
@@ -22,8 +24,9 @@ object player {
 
     val Example: Login = "dumbledore3000"
 
-    given JsonEncoder[Login] = JsonEncoder.string
-    given JsonDecoder[Login] = JsonDecoder.string.mapOrFail(apply)
-    given Schema[Login]      = Schema.string.description("player unique login")
+    given JsonEncoder[Login]     = JsonEncoder.string
+    given JsonDecoder[Login]     = JsonDecoder.string.mapOrFail(apply)
+    given Schema[Login]          = Schema.string.description("player unique login")
+    given CanEqual[Login, Login] = CanEqual.derived
   }
 }
