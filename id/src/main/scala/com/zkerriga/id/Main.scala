@@ -4,7 +4,10 @@ import com.zkerriga.id.config.{AppConfig, SecurityConfig}
 import com.zkerriga.id.endpoints.Endpoints
 import com.zkerriga.id.internal.domain.password.Salt
 import com.zkerriga.id.services.password.PasswordsService
+import com.zkerriga.id.services.players.PlayersService
 import com.zkerriga.id.services.registration.RegistrationService
+import com.zkerriga.id.services.token.TokenGenerator
+import com.zkerriga.id.storages.players.{InMemoryUserRepo, PlayersRepo}
 import sttp.tapir.server.interceptor.log.DefaultServerLog
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import zhttp.http.HttpApp
@@ -33,8 +36,13 @@ object Main extends ZIOAppDefault:
       .provide(
         Scope.default,
         AppConfig.live,
+        SecurityConfig.live,
         EventLoopGroup.auto(),
         ServerChannelFactory.auto,
+        TokenGenerator.live,
+        PasswordsService.live,
+        InMemoryUserRepo.live,
+        PlayersService.live,
         RegistrationService.live,
         ZLayer.Debug.tree,
       )

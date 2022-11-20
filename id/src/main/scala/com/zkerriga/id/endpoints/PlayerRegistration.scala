@@ -89,11 +89,13 @@ object PlayerRegistration:
           _.registerPlayer(login, password, firstName, lastName)
         )
 
-      call.fold(
-        {
-          case th: Throwable                => InternalError.asLeft
-          case conflict: LoginConflictError => conflict.asLeft
-        },
-        token => Response(token).asRight,
-      )
+      call
+        .onError(e => ZIO.logError(s"Error occurred in the player-registration method: $e"))
+        .fold(
+          {
+            case th: Throwable                => InternalError.asLeft
+            case conflict: LoginConflictError => conflict.asLeft
+          },
+          token => Response(token).asRight,
+        )
     }
