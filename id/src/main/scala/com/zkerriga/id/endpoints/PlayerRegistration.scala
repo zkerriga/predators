@@ -3,6 +3,7 @@ package com.zkerriga.id.endpoints
 import cats.syntax.either.*
 import com.zkerriga.id.domain.*
 import com.zkerriga.id.domain.player.*
+import com.zkerriga.id.endpoints.errors.InternalError
 import com.zkerriga.id.internal.domain.password.Password
 import com.zkerriga.id.services.registration.RegistrationService
 import com.zkerriga.id.services.registration.errors.LoginConflictError
@@ -43,11 +44,13 @@ object PlayerRegistration:
       Schema.derived[Response].name(SName("PlayerRegistrationResponse"))
   }
 
-  val protocol: PublicEndpoint[RegistrationData, Unit, Response, Any] =
+  val protocol: PublicEndpoint[RegistrationData, LoginConflictError | InternalError, Response, Any] =
     endpoint.post
       .in("restricted" / "register" / "player")
       .in(jsonBody[RegistrationData].example(RegistrationData.Example))
-      .errorOut(statusCode(StatusCode.Conflict))
+      .errorOut(
+        oneOf[LoginConflictError | InternalError](LoginConflictError.matcher, InternalError.matcher)
+      )
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[Response].example(Response.Example))
       // todo: add cookie setting here for AccessToken
@@ -88,11 +91,11 @@ object PlayerRegistration:
           _.registerPlayer(login, password, firstName, lastName)
         )
 
-      call.foldZIO(
+      call.fold(
         {
-          case th: Throwable                => ZIO.succeed(().asLeft)
-          case conflict: LoginConflictError => ZIO.succeed(().asLeft)
+          case th: Throwable                => InternalError.asLeft
+          case conflict: LoginConflictError => conflict.asLeft
         },
-        token => ZIO.succeed(Response(token).asRight),
+        token => Response(token).asRight,
       )
     }
