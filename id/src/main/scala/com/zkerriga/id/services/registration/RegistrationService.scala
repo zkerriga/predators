@@ -1,14 +1,16 @@
 package com.zkerriga.id.services.registration
 
-import com.zkerriga.id.domain.player.Login
+import com.zkerriga.id.domain.Scopes.Scope
+import com.zkerriga.id.domain.player.{Login, PlayerId}
 import com.zkerriga.id.domain.{AccessToken, FirstName, LastName}
 import com.zkerriga.id.internal.domain.password.Password
+import com.zkerriga.id.services.generators.{TokenGenerator, UserIdGenerator}
 import com.zkerriga.id.services.password.PasswordsService
-import com.zkerriga.id.services.players.PlayersService
-import com.zkerriga.id.services.registration.errors.LoginConflictError
-import com.zkerriga.id.services.token.TokenGenerator
-import com.zkerriga.id.storages.players.PlayersRepo
-import zio.{IO, Layer, ULayer, URLayer, ZIO, ZLayer}
+import com.zkerriga.id.storages.players.errors.LoginConflictError
+import com.zkerriga.id.storages.players.{Player, PlayersRepo}
+import zio.{Clock, IO, Layer, ULayer, URLayer, ZIO, ZLayer}
+
+import java.util.concurrent.TimeUnit
 
 trait RegistrationService {
   def registerPlayer(
@@ -16,38 +18,40 @@ trait RegistrationService {
     password: Password,
     firstName: FirstName,
     lastName: LastName,
-  ): IO[Throwable | LoginConflictError, AccessToken]
+  ): IO[LoginConflictError, AccessToken]
 }
 
 object RegistrationService:
-  def empty: RegistrationService =
-    new:
-      def registerPlayer(
-        login: Login,
-        password: Password,
-        firstName: FirstName,
-        lastName: LastName,
-      ): IO[Throwable | LoginConflictError, AccessToken] =
-        ZIO.logInfo(s"$login, $firstName, $lastName") *> ZIO.succeed(AccessToken.Example)
-
   class Live(
-    players: PlayersService,
+    players: PlayersRepo,
     passwords: PasswordsService,
     tokenGen: TokenGenerator,
+    userIdGen: UserIdGenerator,
   ) extends RegistrationService {
     def registerPlayer(
       login: Login,
       password: Password,
       firstName: FirstName,
       lastName: LastName,
-    ): IO[Throwable | LoginConflictError, AccessToken] =
+    ): IO[LoginConflictError, AccessToken] =
       for
         pHash <- passwords.encrypt(password)
-        id    <- players.register(login, pHash, firstName, lastName)
-        _     <- ZIO.debug(s"Player with id=$id successfully registered")
-        token <- tokenGen.generate
+        id    <- userIdGen.newUserId
+        now   <- Clock.instant
+        entity = Player(
+          id = id,
+          login = login,
+          pHash = pHash,
+          firstName = firstName,
+          lastName = lastName,
+          createdAt = now,
+          scopes = List(Scope.CanOpenPlayerSocket, Scope.CanPlayPredatorsGame),
+        )
+        _     <- players.register(entity)
+        _     <- ZIO.logInfo(s"Player with id=$id successfully registered")
+        token <- tokenGen.newRandomToken
       yield token // todo: other logic
   }
 
-  val live: URLayer[PlayersService & PasswordsService & TokenGenerator, RegistrationService] =
-    ZLayer.fromFunction(Live(_, _, _))
+  val live: URLayer[PlayersRepo & PasswordsService & TokenGenerator & UserIdGenerator, RegistrationService] =
+    ZLayer.fromFunction(Live(_, _, _, _))

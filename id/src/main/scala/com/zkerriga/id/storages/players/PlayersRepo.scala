@@ -1,11 +1,8 @@
 package com.zkerriga.id.storages.players
 
 import com.zkerriga.id.domain.player.{Login, PlayerId}
-import zio.Task
+import com.zkerriga.id.storages.players.errors.LoginConflictError
+import zio.{IO, Task}
 
 trait PlayersRepo:
-  def register(player: Player): Task[PlayerId]
-
-  def findByLogin(login: Login): Task[Option[(PlayerId, Player)]]
-
-  def findById(id: PlayerId): Task[Option[Player]]
+  def register(player: Player): IO[LoginConflictError, Unit]

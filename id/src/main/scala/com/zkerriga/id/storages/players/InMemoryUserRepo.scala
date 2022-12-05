@@ -2,29 +2,24 @@ package com.zkerriga.id.storages.players
 
 import cats.syntax.either.*
 import com.zkerriga.id.domain.player.{Login, PlayerId}
+import com.zkerriga.id.storages.players.errors.LoginConflictError
 import zio.*
 
-case class InMemoryUserRepo(table: Ref[Map[PlayerId, Player]]) extends PlayersRepo:
-  def register(player: Player): Task[PlayerId] =
+class InMemoryUserRepo(private val tableRef: Ref[Map[PlayerId, Player]]) extends PlayersRepo:
+  def register(player: Player): IO[LoginConflictError, Unit] =
     for
-      // todo: figure out how to generate correct strings
-      randomStr <- Random
-        .nextString(PlayerId.Size * 10)
-        .map(_.filter(_.isLetterOrDigit).take(PlayerId.Size))
-      id <- ZIO.fromEither(PlayerId(randomStr).leftMap(RuntimeException(_)))
-      // todo: not safe because PlayerId is not unique
-      _ <- table.update(_.updated(id, player))
+      /* todo: unsafe check, because after checking, another thread can still change the Ref */
+      _ <- tableRef.get.flatMap { table =>
+        if table.exists { case (_, entity) => entity.login == player.login } then
+          ZIO.fail(LoginConflictError(player.login))
+        else ZIO.unit
+      }
+      _ <- tableRef.update(_.updated(player.id, player))
       _ <- debugStateOfTable
-    yield id
-
-  def findByLogin(login: Login): Task[Option[(PlayerId, Player)]] =
-    table.get.map(_.find { case (_, player) => player.login == login })
-
-  def findById(id: PlayerId): Task[Option[Player]] =
-    table.get.map(_.get(id))
+    yield ()
 
   private def debugStateOfTable =
-    table.get.flatMap { table =>
+    tableRef.get.flatMap { table =>
       ZIO.logDebug(s"The state of Players-Table is $table")
     }
 

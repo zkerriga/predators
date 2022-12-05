@@ -6,7 +6,7 @@ import com.zkerriga.id.domain.player.*
 import com.zkerriga.id.endpoints.errors.{ErrorOneOf, InternalError}
 import com.zkerriga.id.internal.domain.password.Password
 import com.zkerriga.id.services.registration.RegistrationService
-import com.zkerriga.id.services.registration.errors.LoginConflictError
+import com.zkerriga.id.storages.players.errors.LoginConflictError
 import sttp.model.StatusCode
 import sttp.tapir.*
 import sttp.tapir.Codec.JsonCodec
@@ -15,7 +15,7 @@ import sttp.tapir.json.zio.*
 import sttp.tapir.server.metrics.prometheus.PrometheusMetrics
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir.ZServerEndpoint
-import zio.{Exit, ZIO}
+import zio.{Cause, Exit, ZIO}
 
 object PlayerRegistration:
   private[endpoints] case class RegistrationData(
@@ -84,18 +84,18 @@ object PlayerRegistration:
        * 7 - log Response
        * 8 - return AccessToken to player
        */
-      val call: ZIO[RegistrationService, Throwable | LoginConflictError, AccessToken] =
+      val call: ZIO[RegistrationService, LoginConflictError, AccessToken] =
         ZIO.serviceWithZIO[RegistrationService](
           _.registerPlayer(login, password, firstName, lastName)
         )
 
-      call
-        .onError(e => ZIO.logError(s"Error occurred in the player-registration method: $e"))
-        .fold(
-          {
-            case th: Throwable                => InternalError.asLeft
-            case conflict: LoginConflictError => conflict.asLeft
-          },
-          token => Response(token).asRight,
-        )
+      call.foldCauseZIO(
+        cause =>
+          ZIO.logError(s"Error occurred in the player-registration method: ${cause.prettyPrint}") as
+            (cause match
+              case Cause.Fail(loginConflict, _) => loginConflict.asLeft
+              case _                            => InternalError.asLeft
+            ),
+        token => ZIO.succeed(Response(token).asRight),
+      )
     }

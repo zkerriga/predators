@@ -9,9 +9,9 @@ object player {
   object PlayerId {
     export UserId.Size
 
-    def apply(id: String): Either[String, PlayerId] = UserId.apply(id)
-
     val Example: PlayerId = UserId.Example
+
+    given Conversion[UserId, PlayerId] = identity
   }
 
   opaque type Login = String

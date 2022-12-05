@@ -29,7 +29,8 @@ object Dependencies {
   }
 
   object other {
-    val logback    = "ch.qos.logback"         % "logback-classic" % "1.4.4"
-    val pureconfig = "com.github.pureconfig" %% "pureconfig-core" % "0.17.2"
+    val logback    = "ch.qos.logback"           % "logback-classic" % "1.4.4"
+    val pureconfig = "com.github.pureconfig"   %% "pureconfig-core" % "0.17.2"
+    val idGen      = "com.softwaremill.common" %% "id-generator"    % "1.4.0"
   }
 }

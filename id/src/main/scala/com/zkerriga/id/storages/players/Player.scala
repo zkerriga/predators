@@ -8,6 +8,7 @@ import com.zkerriga.id.internal.domain.password.PasswordHash
 import java.time.Instant
 
 case class Player(
+  id: PlayerId,
   login: Login,
   pHash: PasswordHash,
   firstName: FirstName,
