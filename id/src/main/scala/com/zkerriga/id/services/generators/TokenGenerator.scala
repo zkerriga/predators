@@ -15,11 +15,11 @@ object TokenGenerator:
   // todo: Naive implementation of string generation. Perhaps you should look for better options
   class Simple extends TokenGenerator {
     def newRandomToken: UIO[AccessToken] =
-      for {
+      for
         randomChunk <- Random.nextBytes(AccessToken.Size)
         readableString = randomChunk.map(byte2char).mkString
         token <- ZIO.fromEither(AccessToken(readableString)).mapError(RuntimeException(_)).orDie
-      } yield token
+      yield token
 
     private def byte2char(byte: Byte): Char =
       AvailableChars(byte.toChar % AvailableCharsSize)

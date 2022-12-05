@@ -10,11 +10,11 @@ trait UserIdGenerator:
 object UserIdGenerator:
   class Live(idGen: IdGenerator) extends UserIdGenerator {
     def newUserId: UIO[UserId] =
-      for {
+      for
         uniqueLongId <- ZIO.succeedBlocking(idGen.nextId())
         id = UserId.fromUniqueLong(uniqueLongId)
         _ <- ZIO.logDebug(s"new UserId generated: $id")
-      } yield id
+      yield id
   }
 
   val live: URLayer[IdGenerator, UserIdGenerator] =
