@@ -14,6 +14,8 @@ package object domain {
      */
     inline val Size = 13
 
+    val AvailableChars: Set[Char] = (('a' to 'z') ++ ('0' to '9')).toSet
+
     /* todo: move the method to special private scope */
     def fromUniqueLong(id: Long): UserId =
       java.lang.Long.toUnsignedString(id, 36).reverse.padTo(Size, '0')
@@ -21,8 +23,8 @@ package object domain {
     /* todo: remove from public */
     def apply(id: String): Either[String, UserId] =
       if id.length != Size then "incorrect size".asLeft
-      else if id.forall(_.isLetterOrDigit) then id.asRight
-      else "must contain only letters or digits".asLeft
+      else if id.forall(AvailableChars) then id.asRight
+      else "forbidden characters".asLeft
 
     val Example: UserId = "w0u8qf1rig5c0"
   }
