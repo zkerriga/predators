@@ -6,12 +6,12 @@ import zio.{UIO, URLayer, ZIO, ZLayer}
 
 import java.security.MessageDigest
 
-trait PasswordsService[F[_]]:
-  def encrypt(password: Password): F[PasswordHash]
-  def verify(doubtful: Password, real: PasswordHash): F[Boolean]
+trait PasswordsService:
+  def encrypt(password: Password): UIO[PasswordHash]
+  def verify(doubtful: Password, real: PasswordHash): UIO[Boolean]
 
 object PasswordsService:
-  class Live(salt: Salt) extends PasswordsService[UIO] {
+  class Live(salt: Salt) extends PasswordsService {
     def encrypt(password: Password): UIO[PasswordHash] =
       PasswordHash.generate(password, salt, hashing)
 
@@ -32,5 +32,5 @@ object PasswordsService:
         .mkString("")
   }
 
-  lazy val live: URLayer[SecurityConfig, PasswordsService[UIO]] =
+  lazy val live: URLayer[SecurityConfig, PasswordsService] =
     ZLayer.fromFunction((config: SecurityConfig) => Live(config.salt))
