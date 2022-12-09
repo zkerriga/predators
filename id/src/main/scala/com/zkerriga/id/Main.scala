@@ -2,6 +2,7 @@ package com.zkerriga.id
 
 import com.zkerriga.id.config.{AppConfig, SecurityConfig, ServerConfig}
 import com.zkerriga.id.endpoints.Endpoints
+import com.zkerriga.id.endpoints.runners.{EndpointRunner, ErrorHandler}
 import com.zkerriga.id.services.generators.{IdGen, TokenGenerator, UserIdGenerator}
 import com.zkerriga.id.services.password.PasswordsService
 import com.zkerriga.id.services.registration.RegistrationService
@@ -13,8 +14,6 @@ import zio.logging.{LogFormat, consoleJson}
 import zio.logging.backend.SLF4J
 
 object Main extends ZIOAppDefault:
-  type AllServices = RegistrationService
-
   val http: HttpApp[AllServices, Throwable] =
     ZioHttpInterpreter().toHttp(Endpoints.all)
 
@@ -35,6 +34,8 @@ object Main extends ZIOAppDefault:
         SecurityConfig.live,
         ServerConfig.live,
         Server.live,
+        ErrorHandler.live,
+        EndpointRunner.live,
         IdGen.live,
         TokenGenerator.live,
         UserIdGenerator.live,

@@ -1,5 +1,6 @@
 package com.zkerriga.id.endpoints
 
+import com.zkerriga.id.AllServices
 import com.zkerriga.id.services.registration.RegistrationService
 import sttp.capabilities.zio.ZioStreams
 import sttp.tapir.AnyEndpoint
@@ -16,7 +17,7 @@ object Endpoints:
   private val docEndpoints: List[ZServerEndpoint[Any, Any]] =
     SwaggerInterpreter().fromEndpoints[Task](apiEndpoints, "id", "1.0.0")
 
-  private val apiServerEndpoints: List[ZServerEndpoint[RegistrationService, Any]] = List(
+  private val apiServerEndpoints: List[ZServerEndpoint[AllServices, Any]] = List(
     PlayerRegistration.logic
   )
 

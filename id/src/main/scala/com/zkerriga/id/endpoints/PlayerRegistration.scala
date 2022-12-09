@@ -4,6 +4,7 @@ import cats.syntax.either.*
 import com.zkerriga.id.domain.*
 import com.zkerriga.id.domain.player.*
 import com.zkerriga.id.endpoints.errors.{ErrorOneOf, InternalError}
+import com.zkerriga.id.endpoints.runners.{EndpointRunner, ErrorHandler}
 import com.zkerriga.id.internal.domain.password.Password
 import com.zkerriga.id.services.registration.RegistrationService
 import com.zkerriga.id.storages.players.errors.LoginConflictError
@@ -61,7 +62,7 @@ object PlayerRegistration:
           |in other services""".stripMargin
       }
 
-  val logic: ZServerEndpoint[RegistrationService, Any] =
+  val logic: ZServerEndpoint[RegistrationService & ErrorHandler & EndpointRunner, Any] =
     protocol.serverLogic { case RegistrationData(login, password, firstName, lastName) =>
       /* todo: add logic
        * 1 - log request
@@ -84,18 +85,7 @@ object PlayerRegistration:
        * 7 - log Response
        * 8 - return AccessToken to player
        */
-      val call: ZIO[RegistrationService, LoginConflictError, AccessToken] =
-        ZIO.serviceWithZIO[RegistrationService](
-          _.registerPlayer(login, password, firstName, lastName)
-        )
-
-      call.foldCauseZIO(
-        cause =>
-          ZIO.logError(s"Error occurred in the player-registration method: ${cause.prettyPrint}") as
-            (cause match
-              case Cause.Fail(loginConflict, _) => loginConflict.asLeft
-              case _                            => InternalError.asLeft
-            ),
-        token => ZIO.succeed(Response(token).asRight),
-      )
+      EndpointRunner.on[RegistrationService].apply {
+        _.registerPlayer(login, password, firstName, lastName).map(Response.apply)
+      }
     }
