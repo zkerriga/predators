@@ -20,7 +20,7 @@ lazy val rootProject = (project in file("."))
       zio.http,
       zio.logging,
       zio.slf4j,
-      other.slf4j,
+      other.logback,
       other.pureconfig,
       other.idGen,
       // test
