@@ -1,20 +1,14 @@
 package com.zkerriga.id
 
-import com.zkerriga.id.config.{AppConfig, SecurityConfig}
+import com.zkerriga.id.config.{AppConfig, SecurityConfig, ServerConfig}
 import com.zkerriga.id.endpoints.Endpoints
-import com.zkerriga.id.internal.domain.password.Salt
 import com.zkerriga.id.services.generators.{IdGen, TokenGenerator, UserIdGenerator}
 import com.zkerriga.id.services.password.PasswordsService
 import com.zkerriga.id.services.registration.RegistrationService
-import com.zkerriga.id.storages.players.{InMemoryUserRepo, PlayersRepo}
-import sttp.tapir.server.interceptor.log.DefaultServerLog
-import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
-import zhttp.http.HttpApp
-import zhttp.service.server.ServerChannelFactory
-import zhttp.service.{EventLoopGroup, Server, ServerChannelFactory}
-import zio.*
-
-import java.util.UUID
+import com.zkerriga.id.storages.players.InMemoryUserRepo
+import sttp.tapir.server.ziohttp.ZioHttpInterpreter
+import zio.{ExitCode, Scope, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
+import zio.http.{HttpApp, Server}
 
 object Main extends ZIOAppDefault:
   type AllServices = RegistrationService
@@ -22,22 +16,20 @@ object Main extends ZIOAppDefault:
   val http: HttpApp[AllServices, Throwable] =
     ZioHttpInterpreter().toHttp(Endpoints.all)
 
-  val server: ZIO[AppConfig & AllServices & EventLoopGroup & ServerChannelFactory & Scope, Throwable, Unit] =
+  private val serverStart: ZIO[Server & AllServices, Throwable, Unit] =
     for
-      config      <- ZIO.service[AppConfig]
-      serverStart <- Server(http).withPort(config.server.port).make
-      _ <- ZIO.logInfo(s"Go to http://localhost:${serverStart.port}/docs to open SwaggerUI")
-      _ <- ZIO.never
+      port <- Server.install[AllServices](http)
+      _    <- ZIO.logInfo(s"Go to http://localhost:$port/docs to open SwaggerUI")
+      _    <- ZIO.never
     yield ()
 
-  val run: ZIO[Environment with ZIOAppArgs with Scope, Any, Any] =
-    server.exitCode
+  val run: ZIO[Environment & ZIOAppArgs & Scope, Any, Any] =
+    serverStart.exitCode
       .provide(
-        Scope.default,
         AppConfig.live,
         SecurityConfig.live,
-        EventLoopGroup.auto(),
-        ServerChannelFactory.auto,
+        ServerConfig.live,
+        Server.live,
         IdGen.live,
         TokenGenerator.live,
         UserIdGenerator.live,

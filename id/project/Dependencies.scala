@@ -7,12 +7,19 @@ object Dependencies {
     val core    = "dev.zio" %% "zio"      % version
     val zioJson = "dev.zio" %% "zio-json" % "0.3.0"
 
+    val http = "io.d11" %% "zhttp" % "2.0.0-RC11"
+
+    val loggingVersion = "2.1.5"
+
+    val logging = "dev.zio" %% "zio-logging"       % loggingVersion
+    val slf4j   = "dev.zio" %% "zio-logging-slf4j" % loggingVersion
+
     val zioTest    = "dev.zio" %% "zio-test"     % version % Test
     val zioTestSbt = "dev.zio" %% "zio-test-sbt" % version % Test
   }
 
   object tapir {
-    val version = "1.2.1"
+    val version = "1.2.3"
 
     val zioServer  = "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server"    % version
     val prometheus = "com.softwaremill.sttp.tapir" %% "tapir-prometheus-metrics" % version
@@ -29,7 +36,7 @@ object Dependencies {
   }
 
   object other {
-    val logback    = "ch.qos.logback"           % "logback-classic" % "1.4.4"
+    val slf4j      = "org.slf4j"                % "slf4j-simple"    % "2.0.5"
     val pureconfig = "com.github.pureconfig"   %% "pureconfig-core" % "0.17.2"
     val idGen      = "com.softwaremill.common" %% "id-generator"    % "1.4.0"
   }
