@@ -21,7 +21,7 @@ object Main extends ZIOAppDefault:
   private val serverStart: ZIO[Server & AllServices, Throwable, Unit] =
     for
       port <- Server.install[AllServices](http)
-      _    <- ZIO.log(s"Go to http://localhost:$port/docs to open SwaggerUI")
+      _    <- ZIO.logInfo(s"Go to http://localhost:$port/docs to open SwaggerUI")
       _    <- ZIO.never
     yield ()
 
