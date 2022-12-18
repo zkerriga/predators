@@ -1,8 +1,11 @@
 package com.zkerriga.id
 
 import sttp.model.Method
-import zio.logging.{LogAnnotation, LogFormat, consoleJson}
+import zio.logging.LogFormat.*
+import zio.logging.{LogAnnotation, LogFilter, LogFormat, consoleJson}
 import zio.{Runtime, ZIOAspect, ZLayer}
+
+import java.time.format.DateTimeFormatter
 
 object LoggingSetup:
   private val operationAnnotation: LogAnnotation[(Method, String)] =
@@ -21,8 +24,12 @@ object LoggingSetup:
 
   val bootstrapLayer: ZLayer[Any, Nothing, Unit] =
     Runtime.removeDefaultLoggers >>> consoleJson(
-      LogFormat.default +
-        LogFormat.annotation(LogAnnotation.TraceId) +
-        LogFormat.annotation(operationAnnotation) +
-        LogFormat.spans
+      label("timestamp", timestamp(DateTimeFormatter.ISO_LOCAL_DATE_TIME)) +
+        label("level", level) +
+        label("thread", fiberId) +
+        label("message", line) +
+        (space + label("cause", cause)).filter(LogFilter.causeNonEmpty) +
+        annotation(LogAnnotation.TraceId) +
+        annotation(operationAnnotation) +
+        spans
     )

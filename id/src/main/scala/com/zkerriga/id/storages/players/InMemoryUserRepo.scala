@@ -20,7 +20,8 @@ class InMemoryUserRepo(private val tableRef: Ref[Map[PlayerId, Player]]) extends
 
   private def debugStateOfTable =
     tableRef.get.flatMap { table =>
-      ZIO.logDebug(s"The state of Players-Table is $table")
+      // ZIO.logDebug doesn't work and I have no idea why
+      ZIO.logWarning(s"state of Players-Table is $table")
     }
 
 object InMemoryUserRepo:
