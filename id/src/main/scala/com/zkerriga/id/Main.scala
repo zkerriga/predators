@@ -8,10 +8,9 @@ import com.zkerriga.id.services.password.PasswordsService
 import com.zkerriga.id.services.registration.RegistrationService
 import com.zkerriga.id.storages.players.InMemoryUserRepo
 import sttp.tapir.server.ziohttp.ZioHttpInterpreter
-import zio.{ExitCode, Runtime, Scope, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
 import zio.http.{HttpApp, Server}
 import zio.logging.{LogFormat, consoleJson}
-import zio.logging.backend.SLF4J
+import zio.{ExitCode, Runtime, Scope, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
 
 object Main extends ZIOAppDefault:
   val http: HttpApp[AllServices, Throwable] =
@@ -25,7 +24,7 @@ object Main extends ZIOAppDefault:
     yield ()
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
-    Runtime.removeDefaultLoggers >>> consoleJson(LogFormat.default)
+    LoggingSetup.bootstrapLayer
 
   val run: ZIO[Environment & ZIOAppArgs & Scope, Any, Any] =
     serverStart.exitCode

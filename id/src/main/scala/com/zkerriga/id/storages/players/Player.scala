@@ -14,5 +14,5 @@ case class Player(
   firstName: FirstName,
   lastName: LastName,
   createdAt: Instant,
-  scopes: List[Scope],
+  scopes: Set[Scope],
 )
