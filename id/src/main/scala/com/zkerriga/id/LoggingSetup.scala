@@ -2,8 +2,9 @@ package com.zkerriga.id
 
 import sttp.model.Method
 import zio.logging.LogFormat.*
+import zio.logging.backend.SLF4J
 import zio.logging.{LogAnnotation, LogFilter, LogFormat, consoleJson}
-import zio.{Runtime, ZIOAspect, ZLayer}
+import zio.{LogLevel, Runtime, ZIOAspect, ZLayer}
 
 import java.time.format.DateTimeFormatter
 
@@ -22,6 +23,7 @@ object LoggingSetup:
     }
   }
 
+  /* todo: think about using slf4j for structural logging */
   val bootstrapLayer: ZLayer[Any, Nothing, Unit] =
     Runtime.removeDefaultLoggers >>> consoleJson(
       label("timestamp", timestamp(DateTimeFormatter.ISO_LOCAL_DATE_TIME)) +
@@ -31,5 +33,6 @@ object LoggingSetup:
         (space + label("cause", cause)).filter(LogFilter.causeNonEmpty) +
         annotation(LogAnnotation.TraceId) +
         annotation(operationAnnotation) +
-        spans
+        spans,
+      LogLevel.Debug,
     )
