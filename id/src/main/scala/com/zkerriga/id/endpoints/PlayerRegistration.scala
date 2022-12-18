@@ -4,7 +4,7 @@ import cats.syntax.either.*
 import com.zkerriga.id.domain.*
 import com.zkerriga.id.domain.player.*
 import com.zkerriga.id.endpoints.errors.{ErrorOneOf, InternalError}
-import com.zkerriga.id.endpoints.runners.{EndpointRunner, ErrorHandler}
+import com.zkerriga.id.endpoints.runners.{EndpointRunner, ErrorHandler, EndpointMeta}
 import com.zkerriga.id.internal.domain.password.Password
 import com.zkerriga.id.services.registration.RegistrationService
 import com.zkerriga.id.storages.players.errors.LoginConflictError
@@ -61,6 +61,8 @@ object PlayerRegistration:
           |and immediately generate them a token for authentication
           |in other services""".stripMargin
       }
+
+  given EndpointMeta = EndpointMeta.from(protocol)
 
   val logic: ZServerEndpoint[RegistrationService & ErrorHandler & EndpointRunner, Any] =
     protocol.serverLogic { case RegistrationData(login, password, firstName, lastName) =>
