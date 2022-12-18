@@ -48,7 +48,7 @@ object RegistrationService:
           scopes = List(Scope.CanOpenPlayerSocket, Scope.CanPlayPredatorsGame),
         )
         _     <- players.register(entity)
-        _     <- ZIO.logInfo(s"Player with id=$id successfully registered")
+        _     <- ZIO.logInfo(s"player with id=$id successfully registered")
         token <- tokenGen.newRandomToken
       yield token // todo: other logic
   }

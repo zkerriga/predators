@@ -19,14 +19,9 @@ object ErrorHandler:
       call.foldCauseZIO(
         {
           case Cause.Fail(error, _) =>
-            ZIO.logWarning(
-              s"Endpoint ended with error: ${error.description}"
-            ) as error.asLeft
+            ZIO.logWarning(s"ended with error: ${error.description}") as error.asLeft
           case cause =>
-            ZIO.logErrorCause(
-              "Endpoint ended with unexpected error",
-              cause,
-            ) as InternalError.asLeft
+            ZIO.logErrorCause("ended with unexpected error", cause) as InternalError.asLeft
         },
         result => ZIO.succeed(result.asRight),
       )
