@@ -5,7 +5,9 @@ import com.zkerriga.id.domain.player.{Login, PlayerId}
 import com.zkerriga.id.storages.players.errors.LoginConflictError
 import zio.*
 
-class InMemoryUserRepo(private val tableRef: Ref[Map[PlayerId, Player]]) extends PlayersRepo:
+private[players] class InMemoryUserRepo(private val tableRef: Ref[Map[PlayerId, Player]])
+    extends PlayersRepo:
+
   def register(player: Player): IO[LoginConflictError, Unit] =
     for
       /* todo: unsafe check, because after checking, another thread can still change the Ref */

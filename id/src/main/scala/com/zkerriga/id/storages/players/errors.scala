@@ -6,7 +6,7 @@ import com.zkerriga.id.endpoints.errors.{EndpointError, EndpointErrorCompanion}
 
 object errors:
   case class LoginConflictError(login: Login) extends EndpointError {
-    def description: String = s"This login '$login' is occupied or prohibited to use"
+    def description: String = s"login '$login' is occupied or prohibited to use"
   }
 
   object LoginConflictError extends EndpointErrorCompanion[LoginConflictError] {
