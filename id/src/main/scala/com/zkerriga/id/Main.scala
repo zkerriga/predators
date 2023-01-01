@@ -7,6 +7,7 @@ import com.zkerriga.id.services.generators.{IdGen, TokenGenerator, UserIdGenerat
 import com.zkerriga.id.services.password.PasswordsService
 import com.zkerriga.id.services.registration.RegistrationService
 import com.zkerriga.id.storages.players.InMemoryUserRepo
+import com.zkerriga.id.storages.tokens.InMemoryAccessRepo
 import sttp.tapir.server.ziohttp.ZioHttpInterpreter
 import zio.http.{HttpApp, Server}
 import zio.logging.{LogFormat, consoleJson}
@@ -40,6 +41,7 @@ object Main extends ZIOAppDefault:
         UserIdGenerator.live,
         PasswordsService.live,
         InMemoryUserRepo.live,
+        InMemoryAccessRepo.live,
         RegistrationService.live,
         ZLayer.Debug.tree,
       )
