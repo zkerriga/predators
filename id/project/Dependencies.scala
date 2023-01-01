@@ -2,14 +2,14 @@ import sbt._
 
 object Dependencies {
   object zio {
-    val version = "2.0.4"
+    val version = "2.0.5"
 
     val core    = "dev.zio" %% "zio"      % version
-    val zioJson = "dev.zio" %% "zio-json" % "0.3.0"
+    val zioJson = "dev.zio" %% "zio-json" % "0.4.2"
 
     val http = "io.d11" %% "zhttp" % "2.0.0-RC11"
 
-    val loggingVersion = "2.1.5"
+    val loggingVersion = "2.1.6"
 
     val logging = "dev.zio" %% "zio-logging"       % loggingVersion
     val slf4j   = "dev.zio" %% "zio-logging-slf4j" % loggingVersion
@@ -19,7 +19,7 @@ object Dependencies {
   }
 
   object tapir {
-    val version = "1.2.3"
+    val version = "1.2.4"
 
     val zioServer  = "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server"    % version
     val prometheus = "com.softwaremill.sttp.tapir" %% "tapir-prometheus-metrics" % version
