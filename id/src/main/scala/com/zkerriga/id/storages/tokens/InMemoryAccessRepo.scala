@@ -15,14 +15,13 @@ private[tokens] class InMemoryAccessRepo private (
 
   def saveAccess(token: AccessToken, access: Access): IO[AccessConflictError, Unit] =
     for {
-      /* todo: unsafe check, because after checking, another thread can still change the Ref */
-      _ <- tableRef.get.flatMap { table =>
-        if table.contains(token) then ZIO.fail(AccessConflictError(token))
-        else ZIO.unit
-      }
       now <- Clock.instant
       expireAt = now plusSeconds 30 // todo: get from config
-      _ <- tableRef.update(_ + (token -> Entity(access, expireAt)))
+      ensureUniqueToken <- tableRef.modify { table =>
+        if table.contains(token) then ZIO.fail(AccessConflictError(token)) -> table
+        else ZIO.unit -> table.updated(token, Entity(access, expireAt))
+      }
+      _ <- ensureUniqueToken
     } yield ()
 
   def removeAccess(token: AccessToken): UIO[Unit] =
