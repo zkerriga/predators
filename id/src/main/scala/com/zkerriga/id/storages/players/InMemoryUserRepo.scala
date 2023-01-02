@@ -10,13 +10,14 @@ private[players] class InMemoryUserRepo(private val tableRef: Ref[Map[PlayerId, 
 
   def register(player: Player): IO[LoginConflictError, Unit] =
     for
-      /* todo: unsafe check, because after checking, another thread can still change the Ref */
-      _ <- tableRef.get.flatMap { table =>
-        if table.exists { case (_, entity) => entity.login == player.login } then
-          ZIO.fail(LoginConflictError(player.login))
-        else ZIO.unit
+      /* todo: ZIO.fail(...) will be calculated every time because of the eager default parameter.
+       *   Will probably change it after discussion here: https://github.com/zio/zio/pull/364
+       */
+      ensureNoLoginConflict <- tableRef.modifySome(ZIO.fail(LoginConflictError(player.login))) {
+        case table if table.forall { case (_, p) => p.login != player.login } =>
+          ZIO.unit -> table.updated(player.id, player)
       }
-      _ <- tableRef.update(_.updated(player.id, player))
+      _ <- ensureNoLoginConflict
       _ <- debugStateOfTable
     yield ()
 
