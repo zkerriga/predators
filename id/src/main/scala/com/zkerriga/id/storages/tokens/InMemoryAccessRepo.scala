@@ -17,9 +17,9 @@ private[tokens] class InMemoryAccessRepo private (
     for {
       now <- Clock.instant
       expireAt = now plusSeconds 30 // todo: get from config
-      ensureUniqueToken <- tableRef.modify { table =>
-        if table.contains(token) then ZIO.fail(AccessConflictError(token)) -> table
-        else ZIO.unit -> table.updated(token, Entity(access, expireAt))
+      ensureUniqueToken <- tableRef.modifySome(ZIO.fail(AccessConflictError(token))) {
+        case table if !table.contains(token) =>
+          ZIO.unit -> table.updated(token, Entity(access, expireAt))
       }
       _ <- ensureUniqueToken
     } yield ()

@@ -10,16 +10,9 @@ private[players] class InMemoryUserRepo private (private val ref: Ref[Table]) ex
 
   def register(player: Player): IO[LoginConflictError, Unit] =
     for
-      /* todo: ZIO.fail(...) will be calculated every time because of the eager default parameter.
-       *   Will probably switch to it after discussion here: https://github.com/zio/zio/pull/364
-       * ensureNoLoginConflict <- ref.modifySome(ZIO.fail(LoginConflictError(player.login))) {
-       *   case Table(table, logins) if !logins(player.login) =>
-       *     ZIO.unit -> Table(table.updated(player.id, player), logins + player.login)
-       * }
-       */
-      ensureNoLoginConflict <- ref.modify { case current @ Table(table, logins) =>
-        if logins(player.login) then ZIO.fail(LoginConflictError(player.login)) -> current
-        else ZIO.unit -> Table(table.updated(player.id, player), logins + player.login)
+      ensureNoLoginConflict <- ref.modifySome(ZIO.fail(LoginConflictError(player.login))) {
+        case Table(table, logins) if !logins(player.login) =>
+          ZIO.unit -> Table(table.updated(player.id, player), logins + player.login)
       }
       _ <- ensureNoLoginConflict
       _ <- debugStateOfTable
