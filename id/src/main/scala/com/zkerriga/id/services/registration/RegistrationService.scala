@@ -53,7 +53,7 @@ object RegistrationService:
         _     <- ZIO.logInfo(s"player with id=$id successfully registered")
         token <- tokenGen.newRandomToken
         _     <- saveToken(token, id, player.scopes).forkDaemon
-      yield token // todo: other logic
+      yield token
 
     private def saveToken(token: AccessToken, user: UserId, scopes: Set[Scope]) =
       (

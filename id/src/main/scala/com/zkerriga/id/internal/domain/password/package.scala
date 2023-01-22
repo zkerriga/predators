@@ -35,6 +35,8 @@ package object password {
       hashing: String => F[String],
     ): F[PasswordHash] = hashing(s"$salt:$password")
 
+    val Example: PasswordHash = "hash"
+
     given CanEqual[PasswordHash, PasswordHash] = CanEqual.derived
   }
 }
