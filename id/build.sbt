@@ -27,6 +27,7 @@ lazy val rootProject = (project in file("."))
       tapir.sttpStub,
       zio.zioTest,
       zio.zioTestSbt,
+      zio.zioMock,
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
   ).dependsOn(domain)
