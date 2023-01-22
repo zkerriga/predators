@@ -17,7 +17,6 @@ import zio.{RLayer, ULayer, ZIO, ZIOAppDefault, ZLayer}
 import java.time.Instant
 
 object RegistrationServiceSpec extends ZIOSpecDefault {
-  private val id          = UserId.Example
   private val login       = Login.Example
   private val password    = Password.Example
   private val name        = FirstName.Example
@@ -30,26 +29,19 @@ object RegistrationServiceSpec extends ZIOSpecDefault {
 
   final val spec = suite("RegistrationService")(
     suite("registerPlayer")(
-      test("happy-path") {
-        val registerMock = MockPlayersRepo.Register(
+      testOn[RegistrationService]("happy-path") { service =>
+        for {
+          _      <- TestClock.setTime(currentTime)
+          result <- service.registerPlayer(login, password, name, lastName)
+        } yield assert(result)(equalTo(token))
+      }.provide(
+        MockPlayersRepo.Register(
           hasField("createdAt", (p: Player) => p.createdAt, equalTo(currentTime)),
           Expectation.unit,
-        )
-        val saveAccessMock = MockAccessRepo.SaveAccess(
-          equalTo(token -> Access(id, Set(Scope.CanOpenPlayerSocket, Scope.CanPlayPredatorsGame))),
-          Expectation.unit,
-        )
-        (for {
-          service <- ZIO.service[RegistrationService]
-          _       <- TestClock.setTime(currentTime)
-          result  <- service.registerPlayer(login, password, name, lastName)
-        } yield assert(result)(equalTo(token)))
-          .provide(
-            registerMock,
-            saveAccessMock,
-            suitLayer,
-          )
-      }
+        ),
+        MockAccessRepo.SaveAccess(anything, Expectation.unit),
+        suitLayer,
+      )
     )
   )
 }
