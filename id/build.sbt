@@ -18,6 +18,7 @@ lazy val rootProject = (project in file("."))
       zio.core,
       zio.zioJson,
       zio.http,
+      zio.kafka,
       zio.logging,
       zio.slf4j,
       other.logback,

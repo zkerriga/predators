@@ -9,6 +9,8 @@ object Dependencies {
 
     val http = "io.d11" %% "zhttp" % "2.0.0-RC11"
 
+    val kafka = "dev.zio" %% "zio-kafka" % version
+
     val loggingVersion = "2.1.8"
 
     val logging = "dev.zio" %% "zio-logging"       % loggingVersion
